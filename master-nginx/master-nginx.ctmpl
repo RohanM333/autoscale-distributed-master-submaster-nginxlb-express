@@ -1,0 +1,43 @@
+upstream master_servers {
+  {{ range service "master-nginx" }}
+  server {{ .Address }}:{{ .Port }};
+  {{ end }}
+}
+
+upstream sub_master_todo {
+  {{ range service "sub-master-todo" }}
+  server {{ .Address }}:{{ .Port }};
+  {{ end }}
+}
+
+upstream sub_master_user {
+  {{ range service "sub-master-user" }}
+  server {{ .Address }}:{{ .Port }};
+  {{ end }}
+}
+
+server {
+  listen 80;
+
+  location /todos {
+    proxy_pass http://sub_master_todo;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+  }
+
+  location /users {
+    proxy_pass http://sub_master_user;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+  }
+
+  location /health {
+    return 200 'OK';
+  }
+}
