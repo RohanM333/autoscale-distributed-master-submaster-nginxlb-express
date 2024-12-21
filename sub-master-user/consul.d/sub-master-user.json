@@ -1,0 +1,11 @@
+{
+  "service": {
+    "name": "sub-master-user",
+    "tags": ["user"],
+    "port": 80,
+    "check": {
+      "http": "http://localhost/health",
+      "interval": "10s"
+    }
+  }
+}
